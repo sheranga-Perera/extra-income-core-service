@@ -23,5 +23,8 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: identifierType
+                  type: VARCHAR(50)
+              - column:
                   name: role
                   type: VARCHAR(50)
