@@ -32,9 +32,11 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private IdentifierType identifierType;
 
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 }
