@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 
@@ -20,12 +21,13 @@ import static org.junit.jupiter.api.Assertions.*;
 })
 class JwtUtilsTest {
 
+    @Autowired
     private JwtUtils jwtUtils;
+
     private UserDetails userDetails;
 
     @BeforeEach
     void setUp() {
-        jwtUtils = new JwtUtils();
         userDetails = User.builder()
                 .username("testuser")
                 .password("password")

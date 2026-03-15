@@ -5,6 +5,7 @@ import com.phx.ei.common.dto.request.LoginRequest;
 import com.phx.ei.common.dto.request.RegisterRequest;
 import com.phx.ei.core.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(value = "http://localhost:4200")
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -23,7 +25,10 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+        log.info("Auth register request received: username={}, identifierType={}, role={}",
+                request.getUsername(), request.getIdentifierType(), request.getRole());
         String token = authService.register(request);
+        log.info("Auth register succeeded: username={}", request.getUsername());
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
@@ -34,7 +39,9 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        log.info("Auth login request received: username={}", request.getUsername());
         String token = authService.login(request);
+        log.info("Auth login succeeded: username={}", request.getUsername());
         return ResponseEntity.ok(new AuthResponse(token));
     }
 }

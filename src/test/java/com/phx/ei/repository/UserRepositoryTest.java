@@ -44,7 +44,7 @@ class UserRepositoryTest {
         assertNotNull(savedUser.getId());
         assertEquals("testuser", savedUser.getUsername());
         assertEquals("encodedpassword", savedUser.getPassword());
-        assertEquals("ROLE_INDIVIDUAL", savedUser.getRole());
+        assertEquals(Role.INDIVIDUAL, savedUser.getRole());
         assertEquals(IdentifierType.EMAIL, savedUser.getIdentifierType());
     }
 
