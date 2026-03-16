@@ -28,3 +28,186 @@ databaseChangeLog:
               - column:
                   name: role
                   type: VARCHAR(50)
+  - changeSet:
+      id: 2
+      author: you
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: individual_profiles
+      changes:
+        - createTable:
+            tableName: individual_profiles
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: fullName
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bio
+                  type: TEXT
+              - column:
+                  name: firstName
+                  type: VARCHAR(255)
+              - column:
+                  name: lastName
+                  type: VARCHAR(255)
+              - column:
+                  name: dob
+                  type: DATE
+              - column:
+                  name: gender
+                  type: VARCHAR(50)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+              - column:
+                  name: nicFront
+                  type: TEXT
+              - column:
+                  name: nicBack
+                  type: TEXT
+              - column:
+                  name: hasDriversLicense
+                  type: BOOLEAN
+              - column:
+                  name: driversLicenseType
+                  type: VARCHAR(100)
+              - column:
+                  name: profession
+                  type: VARCHAR(255)
+              - column:
+                  name: preferredCategories
+                  type: TEXT
+              - column:
+                  name: preferredSectors
+                  type: TEXT
+              - column:
+                  name: skills
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: individual_profiles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_individual_profiles_user
+  - changeSet:
+      id: 3
+      author: you
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: company_profiles
+      changes:
+        - createTable:
+            tableName: company_profiles
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: companyName
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: registrationNumber
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contactPerson
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contactEmail
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: website
+                  type: VARCHAR(255)
+              - column:
+                  name: bio
+                  type: TEXT
+              - column:
+                  name: sector
+                  type: VARCHAR(255)
+        - addForeignKeyConstraint:
+            baseTableName: company_profiles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_company_profiles_user
+  - changeSet:
+      id: 4
+      author: you
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: company_legal_docs
+      changes:
+        - createTable:
+            tableName: company_legal_docs
+            columns:
+              - column:
+                  name: company_profile_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: document
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: company_legal_docs
+            baseColumnNames: company_profile_id
+            referencedTableName: company_profiles
+            referencedColumnNames: id
+            constraintName: fk_company_legal_docs_profile

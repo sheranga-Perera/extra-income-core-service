@@ -1,8 +1,10 @@
 package com.phx.ei.profile.entity;
 
 import com.phx.ei.common.entity.User;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -46,4 +49,14 @@ public class CompanyProfile {
     private String address;
 
     private String website;
+
+    @Column(length = 1000)
+    private String bio;
+
+    private String sector;
+
+    @ElementCollection
+    @CollectionTable(name = "company_legal_docs", joinColumns = @JoinColumn(name = "company_profile_id"))
+    @Column(name = "document", columnDefinition = "TEXT")
+    private List<String> legalDocs;
 }

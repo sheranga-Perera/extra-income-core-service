@@ -5,12 +5,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -38,4 +40,38 @@ public class IndividualProfile {
 
     @Column(length = 1000)
     private String bio;
+
+    private String firstName;
+
+    private String lastName;
+
+    private LocalDate dob;
+
+    private String gender;
+
+    private String email;
+
+    private String address;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String nicFront;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String nicBack;
+
+    @Column(nullable = false)
+    private boolean hasDriversLicense;
+
+    private String driversLicenseType;
+
+    private String profession;
+
+    private String preferredCategories;
+
+    private String preferredSectors;
+
+    @Column(length = 1000)
+    private String skills;
 }
