@@ -211,3 +211,82 @@ databaseChangeLog:
             referencedTableName: company_profiles
             referencedColumnNames: id
             constraintName: fk_company_legal_docs_profile
+  - changeSet:
+      id: 5
+      author: you
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: job_posts
+      changes:
+        - createTable:
+            tableName: job_posts
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: company_user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: companyName
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: VARCHAR(255)
+              - column:
+                  name: sector
+                  type: VARCHAR(255)
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+              - column:
+                  name: hoursPerWeek
+                  type: INT
+              - column:
+                  name: hourlyRate
+                  type: DECIMAL(10,2)
+              - column:
+                  name: contractType
+                  type: VARCHAR(100)
+              - column:
+                  name: contractDuration
+                  type: VARCHAR(100)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: createdAt
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updatedAt
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: job_posts
+            baseColumnNames: company_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_job_posts_company_user
