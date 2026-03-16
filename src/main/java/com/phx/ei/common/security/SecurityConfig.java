@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/individuals/**").hasAnyRole("INDIVIDUAL", "ADMIN")
                         // Company features
                         .requestMatchers("/companies/**").hasAnyRole("COMPANY", "ADMIN")
+                        // Hiring features
+                        .requestMatchers("/hire/**").hasAnyRole("COMPANY", "ADMIN")
                         // Authenticated default
                         .anyRequest().authenticated()
                 )
