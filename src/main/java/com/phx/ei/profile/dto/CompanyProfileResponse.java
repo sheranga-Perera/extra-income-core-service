@@ -3,6 +3,7 @@ package com.phx.ei.profile.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -16,4 +17,7 @@ public class CompanyProfileResponse {
     private String phone;
     private String address;
     private String website;
+    private String bio;
+    private String sector;
+    private List<String> legalDocs;
 }

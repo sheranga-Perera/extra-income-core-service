@@ -8,6 +8,11 @@ spring:
     hibernate:
       ddl-auto: create
     show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
 
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
