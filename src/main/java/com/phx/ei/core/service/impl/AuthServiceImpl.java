@@ -174,7 +174,12 @@ public class AuthServiceImpl implements AuthService {
 
     private LocalDate parseDob(String dob) {
         try {
-            return LocalDate.parse(dob);
+            LocalDate date = LocalDate.parse(dob);
+            if (date.isAfter(LocalDate.now().minusYears(18))) {
+                log.warn("Registration rejected due to age requirement: dob={}", dob);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Must be at least 18 years old");
+            }
+            return date;
         } catch (DateTimeParseException ex) {
             log.warn("Registration rejected due to invalid date of birth: dob={}", dob);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date of birth");
