@@ -137,7 +137,8 @@ class JwtFilterTest {
         String firstAuthName = SecurityContextHolder.getContext().getAuthentication().getName();
         
         // Call filter again
-        jwtFilter.doFilterInternal(request, response, filterChain);
+        MockFilterChain secondChain = new MockFilterChain();
+        jwtFilter.doFilterInternal(request, response, secondChain);
         String secondAuthName = SecurityContextHolder.getContext().getAuthentication().getName();
         
         // Verify authentication remains the same

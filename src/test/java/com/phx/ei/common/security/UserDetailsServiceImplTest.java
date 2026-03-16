@@ -49,7 +49,7 @@ class UserDetailsServiceImplTest {
         assertEquals("testuser", userDetails.getUsername());
         assertEquals("$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG", userDetails.getPassword());
         assertTrue(userDetails.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER")));
+                .anyMatch(authority -> authority.getAuthority().equals(Role.INDIVIDUAL.getAuthority())));
     }
 
     @Test

@@ -8,13 +8,17 @@ import com.phx.ei.core.repository.UserRepository;
 import com.phx.ei.core.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
@@ -26,10 +30,24 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public String register(RegisterRequest request){
+        if (request.getUsername() == null || request.getUsername().isBlank()
+                || request.getPassword() == null || request.getPassword().isBlank()
+                || request.getIdentifierType() == null || request.getRole() == null) {
+            log.warn("Registration rejected due to missing fields: username={}, identifierType={}, role={}",
+                    request.getUsername(), request.getIdentifierType(), request.getRole());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing registration fields");
+        }
         
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            log.warn("Registration rejected due to existing username: username={}", request.getUsername());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+        }
+
         User user = new User(UUID.randomUUID(), request.getUsername(),
                 passwordEncoder.encode(request.getPassword()), request.getIdentifierType(), request.getRole());
         userRepository.save(user);
+        log.info("Registration completed: userId={}, username={}, role={}",
+                user.getId(), user.getUsername(), user.getRole());
         return jwtUtils.generateToken(user.getUsername());
     }
 
@@ -39,12 +57,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public String login(LoginRequest request){
        User user = userRepository.findByUsername(request.getUsername())
-               .orElseThrow(() -> new RuntimeException("Invalid Credentials"));
+               .orElseThrow(() -> {
+                   log.warn("Login failed: username not found: username={}", request.getUsername());
+                   return new RuntimeException("Invalid Credentials");
+               });
 
        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+           log.warn("Login failed: password mismatch: username={}", request.getUsername());
            throw new RuntimeException("Invalid Credentials");
        }
 
+        log.info("Login completed: userId={}, username={}", user.getId(), user.getUsername());
         return jwtUtils.generateToken(user.getUsername());
     }
 
