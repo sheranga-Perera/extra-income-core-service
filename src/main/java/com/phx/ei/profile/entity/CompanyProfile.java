@@ -30,6 +30,9 @@ public class CompanyProfile {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(columnDefinition = "TEXT")
+    private String profilePicture;
+
     @Column(nullable = false)
     private String companyName;
 

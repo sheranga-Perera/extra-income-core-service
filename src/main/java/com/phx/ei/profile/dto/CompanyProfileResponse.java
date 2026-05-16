@@ -10,6 +10,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CompanyProfileResponse {
     private UUID id;
+    private String profilePicture;
     private String companyName;
     private String registrationNumber;
     private String contactPerson;

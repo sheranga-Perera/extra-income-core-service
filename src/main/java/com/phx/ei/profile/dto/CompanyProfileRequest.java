@@ -5,6 +5,7 @@ import java.util.List;
 
 @Data
 public class CompanyProfileRequest {
+    private String profilePicture;
     private String companyName;
     private String registrationNumber;
     private String contactPerson;
