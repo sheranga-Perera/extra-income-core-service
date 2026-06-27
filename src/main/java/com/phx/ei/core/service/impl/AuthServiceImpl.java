@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
         } else if (request.getRole() == Role.COMPANY) {
             validateCompanyRegistration(request);
         }
-        
+
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             log.warn("Registration rejected due to existing username: username={}", request.getUsername());
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");

@@ -9,6 +9,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class IndividualProfileResponse {
     private UUID id;
+    private String profilePicture;
     private String fullName;
     private String phone;
     private String location;

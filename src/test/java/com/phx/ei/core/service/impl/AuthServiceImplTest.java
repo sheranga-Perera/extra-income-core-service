@@ -53,8 +53,8 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        when(passwordEncoder.encode(any())).thenReturn("encoded");
-        when(jwtUtils.generateToken(any())).thenReturn("token");
+        lenient().when(passwordEncoder.encode(any())).thenReturn("encoded");
+        lenient().when(jwtUtils.generateToken(any())).thenReturn("token");
     }
 
     @Test
@@ -166,8 +166,6 @@ class AuthServiceImplTest {
         request.setProfession("Student");
         request.setPreferredCategories("Education");
         request.setSkills("Math");
-
-        when(userRepository.findByUsername("underage")).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> authService.register(request));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());

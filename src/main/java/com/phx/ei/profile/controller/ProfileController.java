@@ -59,6 +59,9 @@ public class ProfileController {
             return created;
         });
 
+        if (request.getProfilePicture() != null) {
+            profile.setProfilePicture(request.getProfilePicture());
+        }
         if (request.getFullName() != null) {
             profile.setFullName(request.getFullName());
         }
@@ -149,6 +152,9 @@ public class ProfileController {
             return created;
         });
 
+        if (request.getProfilePicture() != null) {
+            profile.setProfilePicture(request.getProfilePicture());
+        }
         if (request.getCompanyName() != null) {
             profile.setCompanyName(request.getCompanyName());
         }
@@ -200,6 +206,7 @@ public class ProfileController {
     private IndividualProfileResponse toIndividualResponse(IndividualProfile profile) {
         return new IndividualProfileResponse(
                 profile.getId(),
+                profile.getProfilePicture(),
                 profile.getFullName(),
                 profile.getPhone(),
                 profile.getLocation(),
@@ -224,6 +231,7 @@ public class ProfileController {
     private CompanyProfileResponse toCompanyResponse(CompanyProfile profile) {
         return new CompanyProfileResponse(
                 profile.getId(),
+                profile.getProfilePicture(),
                 profile.getCompanyName(),
                 profile.getRegistrationNumber(),
                 profile.getContactPerson(),
