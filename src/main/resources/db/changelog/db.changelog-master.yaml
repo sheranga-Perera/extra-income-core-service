@@ -1,7 +1,12 @@
 databaseChangeLog:
   - changeSet:
-      id: 1
-      author: you
+      id: core-001-create-users
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: users
       changes:
         - createTable:
             tableName: users
@@ -23,8 +28,123 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: identifierType
+                  name: identifier_type
                   type: VARCHAR(50)
+                  constraints:
+                    nullable: false
               - column:
                   name: role
                   type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: core-002-create-company-profiles
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: company_profiles
+      changes:
+        - createTable:
+            tableName: company_profiles
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: company_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: registration_number
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_person
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: contact_email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: website
+                  type: VARCHAR(255)
+        - addForeignKeyConstraint:
+            baseTableName: company_profiles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: company_profiles_user_id_fk
+
+  - changeSet:
+      id: core-003-create-individual-profiles
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: individual_profiles
+      changes:
+        - createTable:
+            tableName: individual_profiles
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: full_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: phone
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: bio
+                  type: VARCHAR(1000)
+        - addForeignKeyConstraint:
+            baseTableName: individual_profiles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: individual_profiles_user_id_fk
