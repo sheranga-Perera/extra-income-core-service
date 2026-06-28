@@ -1,5 +1,6 @@
 package com.phx.ei.jobs.dto;
 
+import com.phx.ei.jobs.entity.CvRequirement;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,4 +16,5 @@ public class JobPostRequest {
     private BigDecimal hourlyRate;
     private String contractType;
     private String contractDuration;
+    private CvRequirement cvRequirement;
 }

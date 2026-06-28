@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.phx</groupId>
-	<artifactId>ei-user</artifactId>
+	<artifactId>ei-core-service</artifactId>
 	<version>0.0.1</version>
-	<name>ei-user</name>
+	<name>ei-core</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

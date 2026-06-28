@@ -1,5 +1,6 @@
 package com.phx.ei.jobs.dto;
 
+import com.phx.ei.jobs.entity.CvRequirement;
 import com.phx.ei.jobs.entity.JobStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,8 @@ public class JobPostResponse {
     private BigDecimal hourlyRate;
     private String contractType;
     private String contractDuration;
+    private CvRequirement cvRequirement;
     private JobStatus status;
     private LocalDateTime createdAt;
+    private boolean applied;
 }

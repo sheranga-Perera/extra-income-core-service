@@ -12,12 +12,16 @@ import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Table(name = "company_profiles")
+@SQLDelete(sql = "UPDATE company_profiles SET deleted = 1 WHERE id = ?")
+@SQLRestriction("deleted = 0")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -62,4 +66,7 @@ public class CompanyProfile {
     @CollectionTable(name = "company_legal_docs", joinColumns = @JoinColumn(name = "company_profile_id"))
     @Column(name = "document", columnDefinition = "TEXT")
     private List<String> legalDocs;
+
+    @Column(nullable = false)
+    private Integer deleted = 0;
 }

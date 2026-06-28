@@ -3,14 +3,25 @@ package com.phx.ei.jobs.controller;
 import com.phx.ei.common.entity.User;
 import com.phx.ei.common.security.Role;
 import com.phx.ei.core.service.CurrentUserService;
+import com.phx.ei.jobs.dto.AppliedJobResponse;
+import com.phx.ei.jobs.dto.JobApplicationRequest;
+import com.phx.ei.jobs.dto.JobApplicationResponse;
+import com.phx.ei.jobs.dto.JobApplicantResponse;
 import com.phx.ei.jobs.dto.JobPostRequest;
 import com.phx.ei.jobs.dto.JobPostResponse;
+import com.phx.ei.jobs.entity.CvRequirement;
+import com.phx.ei.jobs.entity.JobApplication;
+import com.phx.ei.jobs.entity.JobApplicationStatus;
 import com.phx.ei.jobs.entity.JobPost;
 import com.phx.ei.jobs.entity.JobStatus;
+import com.phx.ei.jobs.repository.JobApplicationRepository;
 import com.phx.ei.jobs.repository.JobPostRepository;
+import com.phx.ei.profile.entity.IndividualProfile;
 import com.phx.ei.profile.repository.CompanyProfileRepository;
+import com.phx.ei.profile.repository.IndividualProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +39,10 @@ import java.util.stream.Stream;
 public class JobPostController {
 
     private final JobPostRepository jobPostRepository;
+    private final JobApplicationRepository jobApplicationRepository;
     private final CurrentUserService currentUserService;
     private final CompanyProfileRepository companyProfileRepository;
+    private final IndividualProfileRepository individualProfileRepository;
 
     @PostMapping
     public ResponseEntity<JobPostResponse> createJob(@RequestBody JobPostRequest request) {
@@ -58,11 +71,14 @@ public class JobPostController {
         post.setHourlyRate(request.getHourlyRate());
         post.setContractType(trimOrNull(request.getContractType()));
         post.setContractDuration(trimOrNull(request.getContractDuration()));
+        post.setCvRequirement(request.getCvRequirement() == null
+                ? CvRequirement.NOT_REQUIRED
+                : request.getCvRequirement());
         post.setStatus(JobStatus.OPEN);
 
         JobPost saved = jobPostRepository.save(post);
         log.info("Job post created: jobId={}, companyUserId={}", saved.getId(), user.getId());
-        return ResponseEntity.ok(toResponse(saved));
+        return ResponseEntity.ok(toResponse(saved, user));
     }
 
     @GetMapping
@@ -76,12 +92,8 @@ public class JobPostController {
             @RequestParam(value = "minRate", required = false) BigDecimal minRate,
             @RequestParam(value = "maxRate", required = false) BigDecimal maxRate
     ) {
-        List<JobPost> posts;
-        if (query != null && !query.isBlank()) {
-            posts = jobPostRepository.searchByQuery(query.trim(), JobStatus.OPEN);
-        } else {
-            posts = jobPostRepository.findByStatusOrderByCreatedAtDesc(JobStatus.OPEN);
-        }
+        User user = currentUserService.getCurrentUser();
+        List<JobPost> posts = findVisibleJobs(user, query);
 
         Stream<JobPost> stream = posts.stream();
         if (category != null && !category.isBlank()) {
@@ -113,18 +125,121 @@ public class JobPostController {
                     && post.getHourlyRate().compareTo(maxRate) <= 0);
         }
 
-        List<JobPostResponse> response = stream.map(this::toResponse).toList();
+        List<JobPostResponse> response = stream.map(post -> toResponse(post, user)).toList();
         return ResponseEntity.ok(response);
+    }
+
+    private List<JobPost> findVisibleJobs(User user, String query) {
+        String normalizedQuery = trimOrNull(query);
+        if (user.getRole() == Role.COMPANY) {
+            if (normalizedQuery != null && !normalizedQuery.isBlank()) {
+                return jobPostRepository.searchByCompanyUserIdAndQuery(
+                        user.getId(),
+                        normalizedQuery,
+                        JobStatus.OPEN
+                );
+            }
+            return jobPostRepository.findByCompanyUserIdAndStatusOrderByCreatedAtDesc(
+                    user.getId(),
+                    JobStatus.OPEN
+            );
+        }
+
+        if (normalizedQuery != null && !normalizedQuery.isBlank()) {
+            return jobPostRepository.searchByQuery(normalizedQuery, JobStatus.OPEN);
+        }
+        return jobPostRepository.findByStatusOrderByCreatedAtDesc(JobStatus.OPEN);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<JobPostResponse> getJob(@PathVariable UUID id) {
+        User user = currentUserService.getCurrentUser();
         JobPost post = jobPostRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
         if (post.getStatus() != JobStatus.OPEN) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
         }
-        return ResponseEntity.ok(toResponse(post));
+        if (user.getRole() == Role.COMPANY && !post.getCompanyUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+        }
+        return ResponseEntity.ok(toResponse(post, user));
+    }
+
+    @GetMapping("/applications/me")
+    public ResponseEntity<List<AppliedJobResponse>> listMyApplications() {
+        User user = currentUserService.getCurrentUser();
+        if (user.getRole() != Role.INDIVIDUAL) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only individuals can view applied jobs");
+        }
+
+        List<AppliedJobResponse> response = jobApplicationRepository
+                .findByIndividualUser_IdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(application -> toAppliedJobResponse(application, user))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/applications")
+    public ResponseEntity<List<JobApplicantResponse>> listJobApplicants(@PathVariable UUID id) {
+        User user = currentUserService.getCurrentUser();
+        if (user.getRole() != Role.COMPANY) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only companies can view job applicants");
+        }
+
+        JobPost post = jobPostRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+        if (!post.getCompanyUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+        }
+
+        List<JobApplicantResponse> response = jobApplicationRepository
+                .findByJobPost_IdOrderByCreatedAtDesc(post.getId())
+                .stream()
+                .map(this::toApplicantResponse)
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/applications")
+    public ResponseEntity<JobApplicationResponse> applyForJob(
+            @PathVariable UUID id,
+            @RequestBody(required = false) JobApplicationRequest request
+    ) {
+        User user = currentUserService.getCurrentUser();
+        if (user.getRole() != Role.INDIVIDUAL) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only individuals can apply for jobs");
+        }
+
+        JobPost post = jobPostRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
+        if (post.getStatus() != JobStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found");
+        }
+        if (jobApplicationRepository.existsByJobPost_IdAndIndividualUser_Id(post.getId(), user.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You have already applied for this job.");
+        }
+
+        String cvDocument = trimOrNull(request == null ? null : request.getCvDocument());
+        if (post.getCvRequirement() == CvRequirement.REQUIRED && cvDocument == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CV is required to apply for this job.");
+        }
+
+        JobApplication application = new JobApplication();
+        application.setId(UUID.randomUUID());
+        application.setJobPost(post);
+        application.setIndividualUser(user);
+        application.setStatus(JobApplicationStatus.SUBMITTED);
+        application.setCvDocument(post.getCvRequirement() == CvRequirement.NOT_REQUIRED ? null : cvDocument);
+
+        try {
+            JobApplication saved = jobApplicationRepository.saveAndFlush(application);
+            log.info("Job application submitted: applicationId={}, jobId={}, individualUserId={}",
+                    saved.getId(), post.getId(), user.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(toApplicationResponse(saved));
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You have already applied for this job.");
+        }
     }
 
     private void validateRequest(JobPostRequest request) {
@@ -138,7 +253,9 @@ public class JobPostController {
         }
     }
 
-    private JobPostResponse toResponse(JobPost post) {
+    private JobPostResponse toResponse(JobPost post, User user) {
+        boolean applied = user.getRole() == Role.INDIVIDUAL
+                && jobApplicationRepository.existsByJobPost_IdAndIndividualUser_Id(post.getId(), user.getId());
         return new JobPostResponse(
                 post.getId(),
                 post.getCompanyName(),
@@ -151,8 +268,58 @@ public class JobPostController {
                 post.getHourlyRate(),
                 post.getContractType(),
                 post.getContractDuration(),
+                post.getCvRequirement(),
                 post.getStatus(),
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                applied
+        );
+    }
+
+    private JobApplicationResponse toApplicationResponse(JobApplication application) {
+        return new JobApplicationResponse(
+                application.getId(),
+                application.getJobPost().getId(),
+                application.getStatus(),
+                application.getCreatedAt(),
+                application.getCvDocument() != null && !application.getCvDocument().isBlank()
+        );
+    }
+
+    private AppliedJobResponse toAppliedJobResponse(JobApplication application, User user) {
+        return new AppliedJobResponse(
+                application.getId(),
+                application.getStatus(),
+                application.getCreatedAt(),
+                application.getCvDocument() != null && !application.getCvDocument().isBlank(),
+                toResponse(application.getJobPost(), user)
+        );
+    }
+
+    private JobApplicantResponse toApplicantResponse(JobApplication application) {
+        User applicant = application.getIndividualUser();
+        IndividualProfile profile = individualProfileRepository.findByUserId(applicant.getId()).orElse(null);
+        String fullName = profile == null ? applicant.getUsername() : profile.getFullName();
+        String phone = profile == null ? null : profile.getPhone();
+        String email = profile == null ? applicant.getUsername() : profile.getEmail();
+        String location = profile == null ? null : profile.getLocation();
+        String profession = profile == null ? null : profile.getProfession();
+        String skills = profile == null ? null : profile.getSkills();
+        String cvDocument = trimOrNull(application.getCvDocument());
+
+        return new JobApplicantResponse(
+                application.getId(),
+                application.getJobPost().getId(),
+                applicant.getId(),
+                fullName,
+                phone,
+                email,
+                location,
+                profession,
+                skills,
+                application.getStatus(),
+                application.getCreatedAt(),
+                cvDocument != null,
+                cvDocument
         );
     }
 

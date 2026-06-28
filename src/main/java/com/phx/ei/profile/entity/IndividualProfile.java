@@ -5,18 +5,21 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
 @Table(name = "individual_profiles")
+@SQLDelete(sql = "UPDATE individual_profiles SET deleted = 1 WHERE id = ?")
+@SQLRestriction("deleted = 0")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -56,11 +59,9 @@ public class IndividualProfile {
 
     private String address;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String nicFront;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String nicBack;
 
@@ -77,4 +78,7 @@ public class IndividualProfile {
 
     @Column(length = 1000)
     private String skills;
+
+    @Column(nullable = false)
+    private Integer deleted = 0;
 }

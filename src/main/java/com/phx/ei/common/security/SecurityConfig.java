@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/localhost:4200"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/metadata/**").permitAll()
                         // Admin-only area
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // Individual features

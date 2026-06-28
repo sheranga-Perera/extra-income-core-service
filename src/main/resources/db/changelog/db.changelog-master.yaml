@@ -62,6 +62,9 @@ databaseChangeLog:
                     nullable: false
                     unique: true
               - column:
+                  name: profile_picture
+                  type: TEXT
+              - column:
                   name: company_name
                   type: VARCHAR(255)
                   constraints:
@@ -94,6 +97,12 @@ databaseChangeLog:
               - column:
                   name: website
                   type: VARCHAR(255)
+              - column:
+                  name: bio
+                  type: VARCHAR(1000)
+              - column:
+                  name: sector
+                  type: VARCHAR(255)
         - addForeignKeyConstraint:
             baseTableName: company_profiles
             baseColumnNames: user_id
@@ -102,7 +111,34 @@ databaseChangeLog:
             constraintName: company_profiles_user_id_fk
 
   - changeSet:
-      id: core-003-create-individual-profiles
+      id: core-003-create-company-legal-docs
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: company_legal_docs
+      changes:
+        - createTable:
+            tableName: company_legal_docs
+            columns:
+              - column:
+                  name: company_profile_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: document
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: company_legal_docs
+            baseColumnNames: company_profile_id
+            referencedTableName: company_profiles
+            referencedColumnNames: id
+            constraintName: company_legal_docs_company_profile_id_fk
+
+  - changeSet:
+      id: core-004-create-individual-profiles
       author: phx
       preConditions:
         onFail: MARK_RAN
@@ -125,6 +161,9 @@ databaseChangeLog:
                     nullable: false
                     unique: true
               - column:
+                  name: profile_picture
+                  type: TEXT
+              - column:
                   name: full_name
                   type: VARCHAR(255)
                   constraints:
@@ -142,9 +181,565 @@ databaseChangeLog:
               - column:
                   name: bio
                   type: VARCHAR(1000)
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+              - column:
+                  name: dob
+                  type: DATE
+              - column:
+                  name: gender
+                  type: VARCHAR(255)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+              - column:
+                  name: nic_front
+                  type: TEXT
+              - column:
+                  name: nic_back
+                  type: TEXT
+              - column:
+                  name: has_drivers_license
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+              - column:
+                  name: drivers_license_type
+                  type: VARCHAR(255)
+              - column:
+                  name: profession
+                  type: VARCHAR(255)
+              - column:
+                  name: preferred_categories
+                  type: VARCHAR(255)
+              - column:
+                  name: preferred_sectors
+                  type: VARCHAR(255)
+              - column:
+                  name: skills
+                  type: VARCHAR(1000)
         - addForeignKeyConstraint:
             baseTableName: individual_profiles
             baseColumnNames: user_id
             referencedTableName: users
             referencedColumnNames: id
             constraintName: individual_profiles_user_id_fk
+
+  - changeSet:
+      id: core-005-create-job-posts
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: job_posts
+      changes:
+        - createTable:
+            tableName: job_posts
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: company_user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: company_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: category
+                  type: VARCHAR(255)
+              - column:
+                  name: sector
+                  type: VARCHAR(255)
+              - column:
+                  name: location
+                  type: VARCHAR(255)
+              - column:
+                  name: hours_per_week
+                  type: INT
+              - column:
+                  name: hourly_rate
+                  type: NUMERIC(38, 2)
+              - column:
+                  name: contract_type
+                  type: VARCHAR(255)
+              - column:
+                  name: contract_duration
+                  type: VARCHAR(255)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: job_posts
+            baseColumnNames: company_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: job_posts_company_user_id_fk
+
+  - changeSet:
+      id: core-006-add-users-deleted
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: users
+            columnName: deleted
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE users ADD CONSTRAINT users_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-007-add-company-profiles-deleted
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: company_profiles
+            columnName: deleted
+      changes:
+        - addColumn:
+            tableName: company_profiles
+            columns:
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE company_profiles ADD CONSTRAINT company_profiles_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-008-add-company-legal-docs-deleted
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: company_legal_docs
+            columnName: deleted
+      changes:
+        - addColumn:
+            tableName: company_legal_docs
+            columns:
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE company_legal_docs ADD CONSTRAINT company_legal_docs_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-009-add-individual-profiles-deleted
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: individual_profiles
+            columnName: deleted
+      changes:
+        - addColumn:
+            tableName: individual_profiles
+            columns:
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE individual_profiles ADD CONSTRAINT individual_profiles_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-010-add-job-posts-deleted
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: job_posts
+            columnName: deleted
+      changes:
+        - addColumn:
+            tableName: job_posts
+            columns:
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE job_posts ADD CONSTRAINT job_posts_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-011-fix-individual-profile-search-column-types
+      author: phx
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            stripComments: true
+            sql: |
+              DO $$
+              BEGIN
+                  IF EXISTS (
+                      SELECT 1
+                      FROM information_schema.columns
+                      WHERE table_schema = current_schema()
+                        AND table_name = 'individual_profiles'
+                        AND column_name = 'location'
+                        AND data_type = 'bytea'
+                  ) THEN
+                      ALTER TABLE individual_profiles
+                          ALTER COLUMN location TYPE VARCHAR(255)
+                          USING encode(location, 'escape');
+                  END IF;
+
+                  IF EXISTS (
+                      SELECT 1
+                      FROM information_schema.columns
+                      WHERE table_schema = current_schema()
+                        AND table_name = 'individual_profiles'
+                        AND column_name = 'profession'
+                        AND data_type = 'bytea'
+                  ) THEN
+                      ALTER TABLE individual_profiles
+                          ALTER COLUMN profession TYPE VARCHAR(255)
+                          USING encode(profession, 'escape');
+                  END IF;
+
+                  IF EXISTS (
+                      SELECT 1
+                      FROM information_schema.columns
+                      WHERE table_schema = current_schema()
+                        AND table_name = 'individual_profiles'
+                        AND column_name = 'skills'
+                        AND data_type = 'bytea'
+                  ) THEN
+                      ALTER TABLE individual_profiles
+                          ALTER COLUMN skills TYPE VARCHAR(1000)
+                          USING encode(skills, 'escape');
+                  END IF;
+              END $$;
+
+  - changeSet:
+      id: core-012-create-company-sectors
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: company_sectors
+      changes:
+        - createTable:
+            tableName: company_sectors
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: display_order
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE company_sectors ADD CONSTRAINT company_sectors_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-013-seed-company-sectors
+      author: phx
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO company_sectors (name, display_order, deleted) VALUES
+                  ('Agriculture', 10, 0),
+                  ('Automotive', 20, 0),
+                  ('Banking and finance', 30, 0),
+                  ('Construction', 40, 0),
+                  ('Education', 50, 0),
+                  ('Food and beverage', 60, 0),
+                  ('Government', 70, 0),
+                  ('Healthcare', 80, 0),
+                  ('Hospitality', 90, 0),
+                  ('Information technology', 100, 0),
+                  ('Logistics and transport', 110, 0),
+                  ('Manufacturing', 120, 0),
+                  ('Media and entertainment', 130, 0),
+                  ('Non-profit', 140, 0),
+                  ('Professional services', 150, 0),
+                  ('Real estate', 160, 0),
+                  ('Retail', 170, 0),
+                  ('Security', 180, 0),
+                  ('Telecommunications', 190, 0),
+                  ('Tourism', 200, 0),
+                  ('Other', 210, 0)
+              ON CONFLICT (name) DO UPDATE
+              SET display_order = EXCLUDED.display_order,
+                  deleted = 0;
+        - sql:
+            dbms: h2
+            splitStatements: true
+            sql: |
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Agriculture', 10, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Automotive', 20, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Banking and finance', 30, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Construction', 40, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Education', 50, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Food and beverage', 60, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Government', 70, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Healthcare', 80, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Hospitality', 90, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Information technology', 100, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Logistics and transport', 110, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Manufacturing', 120, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Media and entertainment', 130, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Non-profit', 140, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Professional services', 150, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Real estate', 160, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Retail', 170, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Security', 180, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Telecommunications', 190, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Tourism', 200, 0);
+              MERGE INTO company_sectors (name, display_order, deleted) KEY(name) VALUES ('Other', 210, 0);
+
+  - changeSet:
+      id: core-014-create-job-contract-types
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: job_contract_types
+      changes:
+        - createTable:
+            tableName: job_contract_types
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: display_order
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE job_contract_types ADD CONSTRAINT job_contract_types_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-015-seed-job-contract-types
+      author: phx
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            stripComments: true
+            sql: |
+              INSERT INTO job_contract_types (name, display_order, deleted) VALUES
+                  ('Part-time', 10, 0),
+                  ('Full-time', 20, 0),
+                  ('Contract', 30, 0),
+                  ('Temporary', 40, 0),
+                  ('Freelance', 50, 0),
+                  ('Internship', 60, 0),
+                  ('Shift-based', 70, 0),
+                  ('Remote', 80, 0),
+                  ('Hybrid', 90, 0),
+                  ('On-site', 100, 0),
+                  ('Other', 110, 0)
+              ON CONFLICT (name) DO UPDATE
+              SET display_order = EXCLUDED.display_order,
+                  deleted = 0;
+        - sql:
+            dbms: h2
+            splitStatements: true
+            sql: |
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Part-time', 10, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Full-time', 20, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Contract', 30, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Temporary', 40, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Freelance', 50, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Internship', 60, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Shift-based', 70, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Remote', 80, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Hybrid', 90, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('On-site', 100, 0);
+              MERGE INTO job_contract_types (name, display_order, deleted) KEY(name) VALUES ('Other', 110, 0);
+
+  - changeSet:
+      id: core-016-create-job-applications
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          tableExists:
+            tableName: job_applications
+      changes:
+        - createTable:
+            tableName: job_applications
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: job_post_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: individual_user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: job_applications
+            baseColumnNames: job_post_id
+            referencedTableName: job_posts
+            referencedColumnNames: id
+            constraintName: job_applications_job_post_id_fk
+        - addForeignKeyConstraint:
+            baseTableName: job_applications
+            baseColumnNames: individual_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: job_applications_individual_user_id_fk
+        - addUniqueConstraint:
+            tableName: job_applications
+            columnNames: job_post_id, individual_user_id
+            constraintName: job_applications_job_user_unique
+        - sql: ALTER TABLE job_applications ADD CONSTRAINT job_applications_status_check CHECK (status IN ('SUBMITTED'))
+        - sql: ALTER TABLE job_applications ADD CONSTRAINT job_applications_deleted_check CHECK (deleted IN (0, 1))
+
+  - changeSet:
+      id: core-017-add-job-post-cv-requirement
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: job_posts
+            columnName: cv_requirement
+      changes:
+        - addColumn:
+            tableName: job_posts
+            columns:
+              - column:
+                  name: cv_requirement
+                  type: VARCHAR(50)
+                  defaultValue: NOT_REQUIRED
+                  constraints:
+                    nullable: false
+        - sql: ALTER TABLE job_posts ADD CONSTRAINT job_posts_cv_requirement_check CHECK (cv_requirement IN ('REQUIRED', 'OPTIONAL', 'NOT_REQUIRED'))
+
+  - changeSet:
+      id: core-018-add-job-application-cv-document
+      author: phx
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          columnExists:
+            tableName: job_applications
+            columnName: cv_document
+      changes:
+        - addColumn:
+            tableName: job_applications
+            columns:
+              - column:
+                  name: cv_document
+                  type: TEXT
