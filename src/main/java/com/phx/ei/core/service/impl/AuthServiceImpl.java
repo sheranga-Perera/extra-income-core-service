@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
@@ -39,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
      * 
      */
     @Override
+    @Transactional
     public String register(RegisterRequest request){
         if (request.getUsername() == null || request.getUsername().isBlank()
                 || request.getPassword() == null || request.getPassword().isBlank()
@@ -62,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             log.warn("Registration rejected due to existing username: username={}", request.getUsername());
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this email or phone already exists.");
         }
 
         User user = new User(UUID.randomUUID(), request.getUsername(),
@@ -122,12 +124,12 @@ public class AuthServiceImpl implements AuthService {
        User user = userRepository.findByUsername(request.getUsername())
                .orElseThrow(() -> {
                    log.warn("Login failed: username not found: username={}", request.getUsername());
-                   return new RuntimeException("Invalid Credentials");
+                   return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
                });
 
        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())){
            log.warn("Login failed: password mismatch: username={}", request.getUsername());
-           throw new RuntimeException("Invalid Credentials");
+           throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
        }
 
         log.info("Login completed: userId={}, username={}", user.getId(), user.getUsername());
