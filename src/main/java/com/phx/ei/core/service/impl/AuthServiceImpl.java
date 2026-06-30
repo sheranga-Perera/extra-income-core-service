@@ -82,8 +82,8 @@ public class AuthServiceImpl implements AuthService {
             profile.setEmail(request.getEmail());
             profile.setPhone(request.getPhone());
             profile.setAddress(request.getAddress());
-            profile.setNicFront(request.getNicFront());
-            profile.setNicBack(request.getNicBack());
+            profile.setNicFront(isBlank(request.getNicFront()) ? "" : request.getNicFront());
+            profile.setNicBack(isBlank(request.getNicBack()) ? "" : request.getNicBack());
             profile.setHasDriversLicense(Boolean.TRUE.equals(request.getHasDriversLicense()));
             profile.setDriversLicenseType(request.getDriversLicenseType());
             profile.setProfession(request.getProfession());
@@ -143,8 +143,6 @@ public class AuthServiceImpl implements AuthService {
                 || isBlank(request.getGender())
                 || isBlank(request.getEmail())
                 || isBlank(request.getPhone())
-                || isBlank(request.getNicFront())
-                || isBlank(request.getNicBack())
                 || isBlank(request.getProfession())
                 || isBlank(request.getPreferredCategories())
                 || isBlank(request.getSkills())) {
@@ -166,9 +164,7 @@ public class AuthServiceImpl implements AuthService {
                 || isBlank(request.getContactEmail())
                 || isBlank(request.getContactPhone())
                 || isBlank(request.getAddress())
-                || isBlank(request.getSector())
-                || request.getLegalDocs() == null
-                || request.getLegalDocs().isEmpty()) {
+                || isBlank(request.getSector())) {
             log.warn("Company registration rejected due to missing fields: username={}", request.getUsername());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing company registration fields");
         }
